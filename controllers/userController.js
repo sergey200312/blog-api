@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user.js');
+require('dotenv').config();
 
 
 
@@ -35,4 +36,31 @@ exports.users_post = asyncHandler(async (req, res, next) => {
     }
 })
 
+exports.login_post = asyncHandler(async(req, res, next) => {
+    try {
+        const { login, password }  = req.body;
+
+        const user = User.findOne({username: login}).exec();
+
+        if(!user) {
+            return res.status(400).json({message: "Некорректный логин или пароль"});
+        }
+
+        const match = bcrypt.compare(password, user.password);
+        if(!match) {
+            return res.status(400).json({message: "Некорректный логин или парольь"})
+        }
+
+        const token = jwt.sing(
+            { id: user._id},
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: '1d' }
+        )
+        
+        res.status(200).json({token, user, message: "Авторизация прошла успешно"})
+
+    } catch (err) {
+        res.status(400).json({message: "Произошла ошибка при авторизации"});
+    }
+})
 
