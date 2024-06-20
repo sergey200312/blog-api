@@ -22,6 +22,12 @@ const PostSchema = new Schema({
     date: {
         type: Date,
         required: true
+    },
+    viewsCount: {
+        type: Number,
+    },
+    likesCount: {
+        type: Number,
     }
 })
 
