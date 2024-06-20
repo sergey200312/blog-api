@@ -2,8 +2,16 @@ var express = require('express');
 var router = express.Router();
 const UserController = require('../controllers/userController.js');
 const mongoose = require('mongoose');
+const verifyToken = require('../middleware/auth.js')
+const asyncHandler = require('express-async-handler')
 
 /* GET home page. */
 router.post('/register', UserController.users_post)
+
+router.post('/login', UserController.login_post)
+
+router.get('/index', verifyToken, asyncHandler(async(req, res, next) => {
+  res.json({succes: "Успешно"})
+}))
 
 module.exports = router;
