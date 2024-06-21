@@ -50,17 +50,17 @@ exports.login_post = asyncHandler(async (req, res, next) => {
         const match = await bcrypt.compare(password, user.password);
 
         if (!match) {
-            return res.status(400).json({ message: "Некорректный логин или парольь" })
+            return res.status(400).json({ message: "Некорректный логин или пароль" });
         }
 
         const token = jwt.sign(
-            { id: user._id },
+            { sub: user._id },
             process.env.ACCESS_TOKEN_SECRET,
             { expiresIn: '1d' }
-        )
-        res.status(200).json({ token, user, message: "Авторизация прошла успешно" })
+        );
+        res.status(200).json({ token, user, message: "Авторизация прошла успешно" });
     } catch (err) {
-        res.status(400).json({ message: "Произошла ошибка при авторизации"})
+        res.status(400).json({ message: "Произошла ошибка при авторизации" });
     }
 });
 

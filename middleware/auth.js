@@ -1,18 +1,24 @@
-const express = require('express');
-require('dotenv').config();
+require("dotenv").config();
+const passport = require("passport");
+const { Strategy: JwtStrategy, ExtractJwt } = require("passport-jwt");
+const User = require("../models/user");
 
-module.exports = function (req, res, next) {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
-    
-    if(!token) return res.status(401).json({message: "Доступ запрещен"});
+const options = {
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    secretOrKey: process.env.ACCESS_TOKEN_SECRET,
+}
 
+passport.use(new JwtStrategy(options, async(jwtPayload, done) => {
     try {
-        const verified = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        req.user = verified;
-        next()
+        const user = await User.findById(jwtPayload.sub);
+        if (user) {
+            return done(null, user);
+        } else {
+            return done(null, false);
+        }
     } catch (err) {
-        res.status(403);
+        return done(err, false);
     }
-};
+}));
 
+module.exports = passport;
