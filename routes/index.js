@@ -14,7 +14,9 @@ router.post('/login', UserController.login_post);
 
 router.get('/', PostController.all_post);
 
-router.post('/new', PostController.create_post);
+router.post('/new', passport.authenticate('jwt', {session: false }), PostController.create_post);
+
+router.put('/post/:id', passport.authenticate('jwt', {session: false }), PostController.update_post);
 
 router.get('/index', passport.authenticate('jwt', { session: false }), asyncHandler(async(req, res, next) => {
   res.json({succes: "Успешно"})

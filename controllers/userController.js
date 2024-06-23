@@ -23,7 +23,7 @@ exports.users_post = [
             }
         }),
     body('password', 'Пароль должен содержать от 4 до 15 символов').trim().isLength({ min: 4, max: 15}).escape(),
-    body('re-password', 'Пароли не сопвадают')
+    body('re-password', 'Пароли не совпадают')
         .custom((value, { req }) => {
             return value === req.body.password;
         }),
