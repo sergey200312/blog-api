@@ -4,7 +4,6 @@ const User = require('../models/user.js');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
-const { ValidatorsImpl } = require('express-validator/lib/chain/validators-impl.js');
 
 
 // Обработка регистрации пользователя
