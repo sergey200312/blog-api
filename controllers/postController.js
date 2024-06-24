@@ -6,13 +6,24 @@ const jwt = require('jsonwebtoken');
 
 // Обработка получения всех постов
 exports.all_post = asyncHandler(async (req, res, next) => {
-    const posts = await Post.find().sort({ date: 1 }).exec();
+    const posts = await Post.find().populate('user', 'username').sort({ date: 1 }).exec();
     if (posts.length == 0) {
         return res.status(400).json({ message: 'Посты не найдены' });
     }
 
     res.status(200).json({ posts })
 })
+
+exports.detail_post = asyncHandler(async(req, res, next) => {
+    const { id } = req.params;
+    const detailPost = await Post.findById(id).populate('user').exec();
+
+    if(!detailPost) {
+        return res.status(404).json({message: 'Пост не найден'});
+    }
+
+    return res.status(200).json({detailPost, message: 'Пост успешно найден'});
+});
 
 // Обработка создания нового поста
 exports.create_post = [
@@ -48,10 +59,8 @@ exports.create_post = [
 
             res.status(200).json({ token, post, message: 'Пост успешно создан' })
         } catch (err) {
-            console.log(err);
             res.status(400).json({ message: 'Произошла ошибка при создании поста' })
         }
-
     })];
 
 // Обработка обновления поста
@@ -73,8 +82,6 @@ exports.update_post = [
 
             const token = req.headers.authorization.split(' ')[1];
             const dbuser = jwt.decode(token);
-            console.log(dbuser.sub);
-            console.log(String(post.user._id));
             if (!dbuser) {
                 return res.status(400).json({ message: 'Невалидный токен' });
             };
@@ -99,3 +106,31 @@ exports.update_post = [
         }
     })
 ];
+
+exports.delete_post = asyncHandler(async(req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const post = await Post.findById(id).populate('user').exec();
+        if (post.length == 0) {
+            return res.status(400).json({ message: 'Пост не найден' });
+        };
+        const token = req.headers.authorization.split(' ')[1];
+        const dbuser = jwt.decode(token);
+        if (!dbuser) {
+            return res.status(400).json({ message: 'Невалидный токен' });
+        };
+        if (String(post.user._id) !== dbuser.sub) {
+            return res.status(400).json({ message: 'Удаление поста запрещено, вы не являетесь автором поста' })
+        };
+
+        const deletePost = await Post.deleteOne({_id: post._id}).exec();
+
+        res.status(200).json({deletePost, message: 'Пост успешно удален'});
+
+
+        
+    } catch (err) {
+        res.status(400).json({message: 'Произошла ошибка при удалении поста'})
+    }
+});
