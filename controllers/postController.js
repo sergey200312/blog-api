@@ -136,3 +136,26 @@ exports.delete_post = asyncHandler(async(req, res, next) => {
         res.status(400).json({message: 'Произошла ошибка при удалении поста'})
     }
 });
+
+// Контроллер для отображения собственных постов пользователя
+exports.my_posts = asyncHandler(async(req, res, next) => {
+    const allPosts = await Post.find().populate('user', 'username _id').sort({date: 1}).exec();
+    
+    if(allPosts.length == 0) {
+        return res.status(400).json({message: 'Посты не найдены'});
+    }
+
+    const token = req.headers.authorization.split(' ')[1];
+        const dbuser = jwt.decode(token);
+        if (!dbuser) {
+            return res.status(400).json({ message: 'Невалидный токен' });
+        }
+
+    const myPosts = allPosts.filter(post => String(post.user._id) === dbuser.sub);
+
+    if(myPosts.length == 0) {
+        return res.status(400).json({message: 'У вас нет постов'})
+    }
+
+    return res.status(200).json({myPosts});
+});

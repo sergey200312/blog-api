@@ -20,6 +20,8 @@ router.post('/new', passport.authenticate('jwt', {session: false }), PostControl
 
 router.put('/post/:id', passport.authenticate('jwt', {session: false }), PostController.update_post);
 
+router.get('/my-posts', passport.authenticate('jwt', {session: false }), PostController.my_posts);
+
 router.delete('/post/:id', passport.authenticate('jwt', {session: false }), PostController.delete_post);
 
 router.get('/index', passport.authenticate('jwt', { session: false }), asyncHandler(async(req, res, next) => {
