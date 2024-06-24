@@ -4,7 +4,7 @@ const Post = require('../models/Post');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 
-// Обработка получения всех постов
+// Контроллер для получения всех постов
 exports.all_post = asyncHandler(async (req, res, next) => {
     const posts = await Post.find().populate('user', 'username').sort({ date: 1 }).exec();
     if (posts.length == 0) {
@@ -14,6 +14,7 @@ exports.all_post = asyncHandler(async (req, res, next) => {
     res.status(200).json({ posts })
 })
 
+// Контроллер для получения конкретного поста
 exports.detail_post = asyncHandler(async(req, res, next) => {
     const { id } = req.params;
     const detailPost = await Post.findById(id).populate('user').exec();
@@ -25,7 +26,7 @@ exports.detail_post = asyncHandler(async(req, res, next) => {
     return res.status(200).json({detailPost, message: 'Пост успешно найден'});
 });
 
-// Обработка создания нового поста
+// Контроллер для создания поста
 exports.create_post = [
     body('title', 'Название поста не должно быть пустым').trim().notEmpty().escape(),
     body('content', 'Содержание поста не должно быть пустым').trim().notEmpty().escape(),
@@ -63,7 +64,7 @@ exports.create_post = [
         }
     })];
 
-// Обработка обновления поста
+// Контроллер для обновления поста
 exports.update_post = [
     body('title', 'Название поста не должно быть пустым').trim().notEmpty().escape(),
     body('content', 'Содержание поста не должно быть пустым').trim().notEmpty().escape(),
@@ -107,6 +108,7 @@ exports.update_post = [
     })
 ];
 
+// Контроллер для удаления поста
 exports.delete_post = asyncHandler(async(req, res, next) => {
     try {
         const { id } = req.params;
