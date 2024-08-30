@@ -11,7 +11,8 @@ exports.all_post = asyncHandler(async (req, res, next) => {
         return res.status(400).json({ message: 'Посты не найдены' });
     }
 
-    res.status(200).json({ posts })
+    const postsWithFormattedDate = posts.map(post => post.toJSON());
+    res.status(200).json({ posts: postsWithFormattedDate });
 })
 
 // Контроллер для получения конкретного поста
@@ -19,9 +20,14 @@ exports.detail_post = asyncHandler(async(req, res, next) => {
     const { id } = req.params;
     const detailPost = await Post.findById(id).populate('user').exec();
 
+
     if(!detailPost) {
         return res.status(404).json({message: 'Пост не найден'});
     }
+
+    detailPost.viewsCount += 1;
+
+    await detailPost.save();
 
     return res.status(200).json({detailPost, message: 'Пост успешно найден'});
 });
@@ -36,7 +42,7 @@ exports.create_post = [
         try {
             const errors = validationResult(req);
 
-            const { title, content } = req.body;
+            const { title, content, image } = req.body;
 
             if (!errors.isEmpty()) {
                 return res.status(400).json({ errors: errors.array() });
@@ -51,6 +57,7 @@ exports.create_post = [
                 user: dbuser.sub,
                 title: title,
                 content: content,
+                image: image,
                 date: new Date(),
                 viewsCount: 0,
                 likesCount: 0,
@@ -74,10 +81,10 @@ exports.update_post = [
         try {
             const errors = validationResult(req);
             const { id } = req.params;
-            const { title, content } = req.body;
+            const { title, content, image } = req.body;
 
             const post = await Post.findById(id).populate('user').exec();
-            if (post.length == 0) {
+            if (!post) {
                 return res.status(400).json({ message: 'Пост не найден' });
             };
 
@@ -86,9 +93,6 @@ exports.update_post = [
             if (!dbuser) {
                 return res.status(400).json({ message: 'Невалидный токен' });
             };
-            if (String(post.user._id) !== dbuser.sub) {
-                return res.status(400).json({ message: 'Редактирование запрещено, вы не являетесь автором поста' })
-            };
 
             if(!errors.isEmpty()) {
                 return res.status(400).json({ errors: errors.array() })
@@ -96,12 +100,13 @@ exports.update_post = [
 
             const upPost = {
                 title: title,
-                content: content
+                content: content,
+                image: image
             };
 
             const updatedPost = await Post.findByIdAndUpdate(id, { $set: upPost }, { new: true }).exec();
 
-            res.status(400).json({ updatedPost, message: 'Пост успешно обновлен' })
+            res.status(200).json({ updatedPost, message: 'Пост успешно обновлен' })
         } catch (err) {
             res.status(400).json({message: 'Произошла ошибка при обновлении поста'})
         }
@@ -111,20 +116,26 @@ exports.update_post = [
 // Контроллер для удаления поста
 exports.delete_post = asyncHandler(async(req, res, next) => {
     try {
+        console.log('fsff');
         const { id } = req.params;
+        console.log('fsdfs')
 
-        const post = await Post.findById(id).populate('user').exec();
-        if (post.length == 0) {
+        const post = await Post.findById(id).exec();
+        console.log('проверка');
+        if (!post) {
+            console.log('не найдено')
             return res.status(400).json({ message: 'Пост не найден' });
         };
+        console.log('sdfss')
         const token = req.headers.authorization.split(' ')[1];
+        console.log('dffsf')
         const dbuser = jwt.decode(token);
         if (!dbuser) {
             return res.status(400).json({ message: 'Невалидный токен' });
         };
-        if (String(post.user._id) !== dbuser.sub) {
-            return res.status(400).json({ message: 'Удаление поста запрещено, вы не являетесь автором поста' })
-        };
+        // if (String(post.user._id) !== dbuser.sub) {
+        //     return res.status(400).json({ message: 'Удаление поста запрещено, вы не являетесь автором поста' })
+        // };
 
         const deletePost = await Post.deleteOne({_id: post._id}).exec();
 
@@ -159,3 +170,19 @@ exports.my_posts = asyncHandler(async(req, res, next) => {
 
     return res.status(200).json({myPosts});
 });
+
+exports.upload = async(req, res) => {
+    try {
+        if (req.file) {
+            res.status(201).json({
+                message: 'Изображение загружено успешно',
+                imageUrl: req.file.path, // URL загруженного изображения в Cloudinary
+            });
+        } else {
+            res.status(400).json({ message: 'Ошибка при загрузке изображения' });
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Произошла ошибка при загрузке изображения' });
+    }
+};

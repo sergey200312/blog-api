@@ -10,14 +10,15 @@ const PostSchema = new Schema({
     title: {
         type: String,
         required: true,
-        minlength: 5,
-        maxlength: 100
+        minlength: 5
     },
     content: {
         type: String,
         required: true,
-        minlength: 1,
-        maxlength: 1000
+        minlength: 1
+    },
+    image: {
+        type: String
     },
     date: {
         type: Date,
@@ -28,7 +29,15 @@ const PostSchema = new Schema({
     },
     likesCount: {
         type: Number,
+    },
+    comment: {
+        type: Schema.Types.ObjectId,
+        ref: "Comment"
     }
-})
+});
+
+PostSchema.virtual('formattedDate').get(function() {
+    return DateTime.fromJSDate(this.date).toFormat('yyyy-MM-dd HH:mm:ss');
+});
 
 module.exports = mongoose.model("Post", PostSchema);
